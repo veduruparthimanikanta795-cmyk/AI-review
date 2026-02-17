@@ -1,0 +1,66 @@
+import streamlit as st
+from groq import Groq
+
+# --- CONFIGURATION ---
+st.set_page_config(page_title="GenAI Code Optimizer", layout="wide")
+
+# --- UI HEADER ---
+st.title("🚀 GenAI Code Reviewer & Optimizer")
+st.markdown("""
+This tool uses **Groq (Llama-3)** to analyze your code for bugs, performance issues, and security vulnerabilities.
+""")
+
+# --- SIDEBAR (API KEY) ---
+with st.sidebar:
+    st.header("Settings")
+    api_key = st.text_input("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", type="password")
+    model_option = st.selectbox("Select Model:", ["llama-3.3-70b-versatile", "llama3-8b-8192"])
+    st.info("Get your key at [console.groq.com](https://console.groq.com/)")
+
+# --- MAIN INTERFACE ---
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Input Code")
+    code_input = st.text_area("Paste your source code here:", height=400, placeholder="def my_function()...")
+    language = st.selectbox("Select Language:", ["Python", "JavaScript", "C++", "Java", "Other"])
+
+with col2:
+    st.subheader("Optimization Results")
+    if st.button("Analyze & Refactor"):
+        if not api_key:
+            st.error("Please enter your Groq API Key in the sidebar!")
+        elif not code_input:
+            st.warning("Please paste some code first.")
+        else:
+            try:
+                # Initialize Groq Client
+                client = Groq(api_key=api_key)
+                
+                # Construct the Prompt
+                system_prompt = (
+                    "You are an expert software engineer. Analyze the provided code for: "
+                    "1. Bugs 2. Performance bottlenecks 3. Best practice violations 4. Security risks. "
+                    "Provide a 'Refactored Version' and a bulleted 'Change Summary'."
+                )
+                
+                with st.spinner("Groq is thinking..."):
+                    chat_completion = client.chat.completions.create(
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": f"Language: {language}\nCode:\n{code_input}"}
+                        ],
+                        model=model_option,
+                    )
+                    
+                    # Display Result
+                    st.markdown(chat_completion.choices[0].message.content)
+            
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+    else:
+        st.write("Results will appear here after analysis.")
+
+# --- FOOTER ---
+st.divider()
+st.caption("Powered by Streamlit & Groq Cloud API")
